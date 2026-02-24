@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import Papa from "papaparse";
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const Papa = require("papaparse");
 
 /**
  * Google Sheets CSV links (published)
