@@ -1,11 +1,10 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-const Papa = require("papaparse");
 
 /**
  * Google Sheets CSV links (published)
+ * Leave blank if you only want uploads.
  */
 const BOOKINGS_URL =
   "https://docs.google.com/spreadsheets/d/e/2PACX-1vSp05U5ICd_RYWgGMZb2uAa0s9LKky8CEgH_grP1P82FzUi1p2i_VyPCBZw_XOhTPVB3dA36WYOLeKm/pub?gid=0&single=true&output=csv";
@@ -29,12 +28,64 @@ function fmtUSD(n: number) {
   return n.toLocaleString("en-US", { style: "currency", currency: "USD" });
 }
 
+/**
+ * Minimal CSV parser (no dependencies).
+ * Handles quoted fields and commas inside quotes.
+ */
+function parseCSV(text: string): Record<string, unknown>[] {
+  const clean = text.replace(/\r/g, "");
+  const lines = clean.split("\n").filter((l) => l.trim().length > 0);
+  if (lines.length === 0) return [];
+
+  const splitLine = (line: string) => {
+    const out: string[] = [];
+    let cur = "";
+    let inQuotes = false;
+
+    for (let i = 0; i < line.length; i++) {
+      const ch = line[i];
+
+      if (ch === '"') {
+        // escaped quote ""
+        if (inQuotes && line[i + 1] === '"') {
+          cur += '"';
+          i++;
+        } else {
+          inQuotes = !inQuotes;
+        }
+        continue;
+      }
+
+      if (ch === "," && !inQuotes) {
+        out.push(cur);
+        cur = "";
+        continue;
+      }
+
+      cur += ch;
+    }
+
+    out.push(cur);
+    return out.map((s) => s.trim());
+  };
+
+  const headers = splitLine(lines[0]).map((h) => h.trim());
+  const rows = lines.slice(1).map(splitLine);
+
+  return rows.map((r) => {
+    const obj: Record<string, unknown> = {};
+    headers.forEach((h, i) => {
+      obj[h] = r[i] ?? "";
+    });
+    return obj;
+  });
+}
+
 function parseMoney(val: unknown): number {
   if (val === null || val === undefined) return NaN;
   const s0 = String(val).trim();
   if (!s0) return NaN;
 
-  // supports "(1,234.56)" negatives too
   const neg = s0.startsWith("(") && s0.endsWith(")");
   const cleaned = s0.replace(/[\$,()\s]/g, "").replace(/,/g, "");
   const num = Number(cleaned);
@@ -47,13 +98,13 @@ function toISODate(raw: unknown): string | null {
   let s = String(raw).trim();
   if (!s) return null;
 
-  // date range like "7/14/2025 - 7/25/2025" -> use first date (check-in)
+  // date range like "7/14/2025 - 7/25/2025" -> use first date
   const range = s.match(
     /^(\d{1,2}\/\d{1,2}\/\d{4})\s*-\s*(\d{1,2}\/\d{1,2}\/\d{4})$/
   );
   if (range) s = range[1];
 
-  // YYYY-MM -> treat as first day of month
+  // YYYY-MM -> first day
   if (/^\d{4}-\d{2}$/.test(s)) return `${s}-01`;
 
   // YYYY-MM-DD
@@ -95,7 +146,6 @@ function normalizeFixedVar(x: unknown): FixedVar {
   const s = (x ? String(x).trim().toLowerCase() : "").replace(/\s+/g, "");
   if (s === "fixed") return "fixed";
   if (s === "variable") return "variable";
-  if (s === "fixed/variable") return undefined;
   return undefined;
 }
 
@@ -108,7 +158,7 @@ export default function Home() {
   const bookingsRef = useRef<HTMLInputElement | null>(null);
   const expensesRef = useRef<HTMLInputElement | null>(null);
 
-  // ✅ Auto-refresh every 60 seconds (and once on load)
+  // Auto-refresh every 60 seconds + once on load
   useEffect(() => {
     refreshFromGoogleSheets();
     const id = setInterval(refreshFromGoogleSheets, 60000);
@@ -117,17 +167,11 @@ export default function Home() {
   }, []);
 
   async function parseBookingsCSV(text: string) {
-    const parsed = Papa.parse<Record<string, unknown>>(text, {
-      header: true,
-      skipEmptyLines: true,
-    });
+    const data = parseCSV(text);
 
     const out: Txn[] = [];
-    let rowsSeen = 0;
+    let rowsSeen = data.length;
     let created = 0;
-
-    const data = parsed.data ?? [];
-    rowsSeen += data.length;
 
     for (const row of data) {
       const dateRaw = pickRowValue(row, ["Date", "date"]);
@@ -174,17 +218,11 @@ export default function Home() {
   }
 
   async function parseExpensesCSV(text: string) {
-    const parsed = Papa.parse<Record<string, unknown>>(text, {
-      header: true,
-      skipEmptyLines: true,
-    });
+    const data = parseCSV(text);
 
     const out: Txn[] = [];
-    let rowsSeen = 0;
+    let rowsSeen = data.length;
     let created = 0;
-
-    const data = parsed.data ?? [];
-    rowsSeen += data.length;
 
     for (const row of data) {
       const dateRaw = pickRowValue(row, ["Date", "date", "Month", "month"]);
@@ -269,9 +307,13 @@ export default function Home() {
     try {
       setStatus("Refreshing from Google Sheets...");
 
-      // ✅ cache-bust so sheet edits show up quickly
-      const bookingsText = await fetch(`${BOOKINGS_URL}&_t=${Date.now()}`, { cache: "no-store" }).then((r) => r.text());
-      const expensesText = await fetch(`${EXPENSES_URL}&_t=${Date.now()}`, { cache: "no-store" }).then((r) => r.text());
+      const bookingsText = await fetch(`${BOOKINGS_URL}&_t=${Date.now()}`, {
+        cache: "no-store",
+      }).then((r) => r.text());
+
+      const expensesText = await fetch(`${EXPENSES_URL}&_t=${Date.now()}`, {
+        cache: "no-store",
+      }).then((r) => r.text());
 
       const b = await parseBookingsCSV(bookingsText);
       const e = await parseExpensesCSV(expensesText);
