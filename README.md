@@ -2,6 +2,8 @@
 
 A financial operations and analytics dashboard designed to help short-term rental operators monitor property performance, expenses, and operating trends in one place.
 
+![STR Finance Dashboard](dashboard-preview.png)
+
 ## Overview
 
 I built this project as a practical financial-management tool for small short-term rental portfolios. The goal was to consolidate operating data into a cleaner dashboard and make it easier to analyze performance across properties and reporting periods.
