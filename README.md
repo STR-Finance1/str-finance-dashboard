@@ -1,36 +1,42 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# STR Finance Dashboard
 
-## Getting Started
+A financial operations and analytics dashboard designed to help short-term rental operators monitor property performance, expenses, and operating trends in one place.
 
-First, run the development server:
+## Overview
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+I built this project as a practical financial-management tool for small short-term rental portfolios. The goal was to consolidate operating data into a cleaner dashboard and make it easier to analyze performance across properties and reporting periods.
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+The application supports:
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+- Property and monthly performance views
+- Revenue and expense analysis
+- KPI calculations and operating metrics
+- Expense-category analysis
+- CSV and Google Sheets-based data workflows
+- File uploads and data refreshes
+- Interactive filtering and dashboard views
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Why I Built It
 
-## Learn More
+The project grew out of a real operating need: financial and property-management information was spread across multiple sources and required too much manual manipulation to analyze consistently.
 
-To learn more about Next.js, take a look at the following resources:
+I designed the dashboard to create a more scalable workflow for organizing data, identifying trends, and supporting operating decisions.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Technology
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+- Next.js
+- React
+- TypeScript
+- Git / GitHub
+- Vercel
+- Google Sheets / CSV data workflows
 
-## Deploy on Vercel
+## What I Learned
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Building the dashboard required translating a business problem into functional requirements, structuring data for analysis, troubleshooting application and data-flow issues, iterating on the user experience, and deploying a working application.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+The project reflects my broader interest in using technology and automation to improve financial operations and reduce repetitive manual work.
+
+## Status
+
+Personal portfolio project — 2026
